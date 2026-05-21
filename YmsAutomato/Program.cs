@@ -25,7 +25,7 @@ app.UseStaticFiles();
 // Endpoint para processar eventos
 app.MapPost("/processar-evento", ([FromBody] RequisicaoEvento req, MotorLogistico motor) =>
 {
-    var (sucesso, resposta) = motor.ProcessarEvento(req.Evento);
+    var (sucesso, resposta) = motor.ProcessarEvento(req.Evento, req.Peso);
     
     if (!sucesso)
     {

@@ -6,6 +6,7 @@ namespace YmsAutomato.Models
         Pesagem_Entrada,
         Doca,
         Pesagem_Saida,
+        Aguardando_Aprovacao,
         Finalizado,
         Erro
     }
@@ -26,9 +27,11 @@ namespace YmsAutomato.Models
         evento_captura,
         evento_liberacao_doca,
         evento_balanca_saida,
+        evento_aprovacao_manual,
+        evento_rejeicao_manual,
         ev_saida_finalizada
     }
 
-    public record RequisicaoEvento(EventoLogistico Evento);
-    public record RespostaEstado(EstadoLogistico Estado, SubEstadoPesagem SubEstado, string Mensagem);
+    public record RequisicaoEvento(EventoLogistico Evento, decimal? Peso = null);
+    public record RespostaEstado(EstadoLogistico Estado, SubEstadoPesagem SubEstado, string Mensagem, decimal? Peso = null);
 }

@@ -12,24 +12,44 @@
             --success: #27ae60;
             --error: #e74c3c;
             --active: #3498db;
+            --warning: #e67e22;
         }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--primary); display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .container { max-width: 900px; width: 100%; }
         .states-visualizer { display: flex; justify-content: space-around; margin-bottom: 30px; gap: 10px; flex-wrap: wrap; }
         .state-card { background: var(--card-bg); border: 2px solid #ddd; padding: 15px; border-radius: 8px; width: 150px; text-align: center; transition: all 0.3s; opacity: 0.6; }
-        .state-card.active { border-color: var(--active); opacity: 1; transform: scale(1.05); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); background-color: #ebf5fb; }
-        .state-card.finalized { border-color: var(--success); background-color: #eafaf1; opacity: 1; }
-        
+        .state-card.active    { border-color: var(--active);   opacity: 1; transform: scale(1.05); box-shadow: 0 4px 15px rgba(52,152,219,0.3);  background-color: #ebf5fb; }
+        .state-card.finalized { border-color: var(--success);  background-color: #eafaf1; opacity: 1; }
+        .state-card.approval  { border-color: var(--warning);  background-color: #fef9e7; opacity: 1; transform: scale(1.05); box-shadow: 0 4px 15px rgba(230,126,34,0.3); }
+        .state-card.erro      { border-color: var(--error);    background-color: #fdedec; opacity: 1; }
+
         .controls { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .sensor-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; background-color: var(--primary); color: white; transition: background 0.2s; }
         button:hover { background-color: #34495e; }
         button.reset { background-color: #95a5a6; }
-        
+        button.reset:hover { background-color: #7f8c8d; }
+
+        .peso-group { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
+        .peso-group label { font-weight: bold; color: var(--primary); }
+        .peso-group input { padding: 8px 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 1em; width: 140px; transition: border-color 0.2s; }
+        .peso-group input:focus { outline: none; border-color: var(--active); }
+        .peso-group span { font-size: 0.9em; color: #7f8c8d; }
+
+        #painel-aprovacao { display: none; background: #fef9e7; border: 2px solid var(--warning); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        #painel-aprovacao h3 { margin: 0 0 8px 0; color: var(--warning); }
+        #peso-capturado-display { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; color: var(--primary); }
+        .approval-buttons { display: flex; gap: 15px; justify-content: center; }
+        .btn-aprovar  { background-color: var(--success) !important; font-size: 1.05em; padding: 12px 24px !important; }
+        .btn-aprovar:hover  { background-color: #229954 !important; }
+        .btn-rejeitar { background-color: var(--error)   !important; font-size: 1.05em; padding: 12px 24px !important; }
+        .btn-rejeitar:hover { background-color: #c0392b !important; }
+
         .log-area { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.9em; }
-        .log-entry { margin-bottom: 5px; border-left: 3px solid var(--active); padding-left: 10px; }
-        .log-error { border-left-color: var(--error); color: #ffadad; }
-        
+        .log-entry   { margin-bottom: 5px; border-left: 3px solid var(--active);   padding-left: 10px; }
+        .log-error   { border-left-color: var(--error);   color: #ffadad; }
+        .log-warning { border-left-color: var(--warning); color: #ffd580; }
+
         .sub-state { font-size: 0.8em; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
         .status-msg { margin-top: 10px; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; display: none; }
     </style>
@@ -37,7 +57,7 @@
 <body>
     <div class="container">
         <h1>Motor de Validação YMS (Autômatos)</h1>
-        
+
         <div class="states-visualizer" id="visualizer">
             <div class="state-card" id="state-Portaria">
                 <strong>Portaria</strong>
@@ -53,8 +73,21 @@
                 <strong>Pesagem Saída</strong>
                 <div class="sub-state" id="sub-Pesagem_Saida"></div>
             </div>
+            <div class="state-card" id="state-Aguardando_Aprovacao">
+                <strong>Aguard. Aprovação</strong>
+            </div>
             <div class="state-card" id="state-Finalizado">
                 <strong>Finalizado</strong>
+            </div>
+        </div>
+
+        <!-- Painel de aprovação manual (visível só em Aguardando_Aprovacao) -->
+        <div id="painel-aprovacao">
+            <h3>⚠ Aprovação Manual Necessária</h3>
+            <div id="peso-capturado-display">Peso capturado diverge do esperado.</div>
+            <div class="approval-buttons">
+                <button class="btn-aprovar"  onclick="aprovar()">✔ Aprovar — Liberar para Doca</button>
+                <button class="btn-rejeitar" onclick="rejeitar()">✘ Rejeitar — Encerrar com Erro</button>
             </div>
         </div>
 
@@ -64,12 +97,19 @@
                 <button onclick="enviarEvento(0)">RFID Portaria (ev_rfid)</button>
                 <button onclick="enviarEvento(1)">Balança Entrada (ev_balanca)</button>
                 <button onclick="enviarEvento(2)">Estabilizar (ev_estabilizacao)</button>
-                <button onclick="enviarEvento(3)">Capturar Peso (ev_captura)</button>
+                <button onclick="capturarPeso()">Capturar Peso (ev_captura)</button>
                 <button onclick="enviarEvento(4)">Liberação Doca (ev_liberacao)</button>
                 <button onclick="enviarEvento(5)">Balança Saída (ev_balanca_s)</button>
-                <button onclick="enviarEvento(6)">Saída Finalizada (ev_saida)</button>
+                <button onclick="enviarEvento(8)">Saída Finalizada (ev_saida)</button>
                 <button class="reset" onclick="resetar()">Resetar</button>
             </div>
+
+            <div class="peso-group">
+                <label for="input-peso">Peso capturado:</label>
+                <input type="number" id="input-peso" placeholder="ex: 50000" min="0" step="0.01" />
+                <span>kg &nbsp;(esperado: 50.000 kg)</span>
+            </div>
+
             <div id="status-msg" class="status-msg"></div>
         </div>
 
